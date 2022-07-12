@@ -24,13 +24,16 @@
 
 #include "json.hpp"
 
+#include "include/EqnConc.h"
 #include "include/EqnConc_2.h"
+#include "include/EqnConc_3.h"
 
 using json = nlohmann::json;
 
 int main(int argc, char **argv)
 {
-    EqnConc_2 solver;
+    // EqnConc_2 solver;
+    EqnConc_2x solver;
 
     if(argc == 2)
     {
@@ -46,8 +49,11 @@ int main(int argc, char **argv)
        }
        std::cout << file << std::endl;
 
-       solver.setInitialConcentrations(file["A0"].get<double>(),file["B0"].get<double>());
-       solver.setStoichiometry(file["A"].get<int>(),file["B"].get<int>());
+       //solver.setInitialConcentrations({ file["A0"].get<double>(), file["B0"].get<double>() });
+       solver.setInitialConcentrations(file["concentrations"].get<std::vector<double>>());
+       //solver.setStoichiometry({ file["A"].get<int>(), file["B"].get<int>() });
+       solver.setStoichiometry(file["stoichiometry"].get<std::vector<int>>());
+
        auto v7 = file["constants"].get<std::vector<double>>();
        std::vector<double> constants;
        for (auto i : v7)
@@ -62,8 +68,8 @@ int main(int argc, char **argv)
        solver.setConvergeThreshold(file.value("ConvThresh", 1e-20));
     }else
     {
-        solver.setInitialConcentrations(0.00100009, 0.003979);
-        solver.setStoichiometry(10,10);
+        solver.setInitialConcentrations({ 0.00100009, 0.003979 });
+        solver.setStoichiometry({ 10, 10 });
         //solver.setStoichiometry(1,2);
         std::default_random_engine generator;
         std::uniform_int_distribution<int> distribution(1,6);
@@ -78,15 +84,18 @@ int main(int argc, char **argv)
     }
     solver.Guess();
     auto result = solver.solver();
+    std::cout << "Result of Calculation - equilibrium concentration of pure species" << std::endl;
     for(auto i : result)
         std::cout << i << " ";
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
 
+    std::cout << "Result of Calculation - equilibrium concentration of all species" << std::endl;
     result = solver.AllConcentrations();
     for(auto i : result)
         std::cout << i << " ";
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
 
+    std::cout << "Recalculated initial concentrations" << std::endl;
     result = solver.RecalculatedInititial();
     for(auto i : result)
         std::cout << i << " ";
